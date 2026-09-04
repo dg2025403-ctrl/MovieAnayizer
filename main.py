@@ -72,6 +72,9 @@ def load_data():
     return df
 
 
+# =====================================
+# 데이터 불러오기
+# =====================================
 try:
     df = load_data()
 except Exception as error:
@@ -81,7 +84,7 @@ except Exception as error:
 
 
 # =====================================
-# 제목
+# 제목과 데이터 요약
 # =====================================
 st.title("🎬 영화 데이터 그래프 도감 2 - 분포와 관계")
 
@@ -90,10 +93,6 @@ st.write(
     "해당 기간에 개봉한 영화 데이터를 살펴봅니다."
 )
 
-
-# =====================================
-# 데이터 요약
-# =====================================
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -126,6 +125,12 @@ genre_counts = (
     .value_counts()
     .rename_axis("장르")
     .reset_index(name="영화 편수")
+)
+
+genre_counts["비율"] = (
+    genre_counts["영화 편수"]
+    / genre_counts["영화 편수"].sum()
+    * 100
 )
 
 fig_donut = px.pie(
@@ -193,7 +198,9 @@ fig_treemap.update_traces(
     )
 )
 
-fig_treemap.update_layout(height=650)
+fig_treemap.update_layout(
+    height=650,
+)
 
 st.plotly_chart(
     fig_treemap,
@@ -270,13 +277,16 @@ st.info(
 
 
 # =====================================
-# 4. 스크린 수와 총 관객 산점도
+# 4. 개봉일 스크린 수와 총 관객 산점도
 # =====================================
 st.divider()
 st.header("4. 개봉일 스크린 수와 총 관객의 관계")
 
 scatter_data = df.dropna(
-    subset=["first_scrn", "total_audi"]
+    subset=[
+        "first_scrn",
+        "total_audi",
+    ]
 ).copy()
 
 fig_scatter = px.scatter(
@@ -302,7 +312,9 @@ fig_scatter.update_traces(
     )
 )
 
-fig_scatter.update_layout(height=600)
+fig_scatter.update_layout(
+    height=600,
+)
 
 fig_scatter.update_yaxes(
     tickformat=",",
@@ -432,7 +444,9 @@ fig_bubble.update_traces(
     )
 )
 
-fig_bubble.update_layout(height=650)
+fig_bubble.update_layout(
+    height=650,
+)
 
 fig_bubble.update_yaxes(
     tickformat=",",
@@ -459,7 +473,10 @@ st.header("7. 제작 국가와 장르별 영화 편수")
 
 sunburst_data = (
     df.groupby(
-        ["nation", "genre_first"],
+        [
+            "nation",
+            "genre_first",
+        ],
         as_index=False,
     )
     .size()
@@ -472,7 +489,10 @@ sunburst_data = (
 
 fig_sunburst = px.sunburst(
     sunburst_data,
-    path=["nation", "genre_first"],
+    path=[
+        "nation",
+        "genre_first",
+    ],
     values="영화 편수",
     color="nation",
     title="제작 국가에서 장르로 내려가는 영화 편수",
@@ -487,7 +507,9 @@ fig_sunburst.update_traces(
     )
 )
 
-fig_sunburst.update_layout(height=700)
+fig_sunburst.update_layout(
+    height=700,
+)
 
 st.plotly_chart(
     fig_sunburst,
@@ -503,7 +525,7 @@ st.info(
 
 
 # =====================================
-# 8. 흥행 기간 히스토그램
+# 8. 영화가 10위권에 머문 기간 히스토그램
 # =====================================
 st.divider()
 st.header("8. 영화가 10위권에 머문 기간")
@@ -581,46 +603,34 @@ st.info(
 
 
 # =====================================
-# 8-1. 전체 영화별 흥행 기간 산점도
+# 8-1. 전체 영화의 흥행 기간과 첫 주 관객 산점도
 # =====================================
-st.subheader("전체 영화별 10위권 체류 기간")
+st.subheader("전체 영화의 10위권 체류 기간과 첫 주 관객")
 
-days_scatter_data = days_data.dropna(
-    subset=["days_in_top10"]
+days_scatter_data = df.dropna(
+    subset=[
+        "days_in_top10",
+        "first_week_audi",
+        "total_audi",
+    ]
 ).copy()
 
-# 영화명 순서가 흥행 기간에 따라 정렬되도록 범주형으로 지정
-days_scatter_data = days_scatter_data.sort_values(
-    "days_in_top10",
-    ascending=True,
-)
-
-movie_order = days_scatter_data["movieNm"].tolist()
-
-days_scatter_data["movieNm"] = pd.Categorical(
-    days_scatter_data["movieNm"],
-    categories=movie_order,
-    ordered=True,
-)
-
-# 총 관객이 없는 경우 점 크기 계산용 값 처리
 days_scatter_data["plot_size"] = (
     days_scatter_data["total_audi"]
-    .fillna(1)
     .clip(lower=1)
 )
 
 fig_days_scatter = px.scatter(
     days_scatter_data,
-    x="movieNm",
-    y="days_in_top10",
+    x="days_in_top10",
+    y="first_week_audi",
     color="genre_first",
     size="plot_size",
-    size_max=35,
-    title="전체 영화의 10위권 체류 기간",
+    size_max=40,
+    title="10위권 체류 기간과 첫 주 관객의 관계",
     labels={
-        "movieNm": "영화명",
-        "days_in_top10": "10위권에 머문 전체 일수",
+        "days_in_top10": "10위권에 머문 일수",
+        "first_week_audi": "첫 주 관객 수",
         "genre_first": "장르",
         "plot_size": "총 관객 수",
     },
@@ -637,7 +647,7 @@ fig_days_scatter.update_traces(
     hovertemplate=(
         "<b>%{customdata[0]}</b><br>"
         "장르: %{customdata[1]}<br>"
-        "10위권에 머문 전체 일수: %{customdata[2]:,.0f}일<br>"
+        "10위권에 머문 일수: %{customdata[2]:,.0f}일<br>"
         "첫 주 관객: %{customdata[3]:,.0f}명<br>"
         "총 관객: %{customdata[4]:,.0f}명"
         "<extra></extra>"
@@ -645,10 +655,13 @@ fig_days_scatter.update_traces(
 )
 
 fig_days_scatter.update_layout(
-    height=1200,
-    xaxis_title="영화명",
-    yaxis_title="10위권에 머문 전체 일수",
-    xaxis_tickangle=-65,
+    height=700,
+    xaxis_title="10위권에 머문 일수",
+    yaxis_title="첫 주 관객 수",
+)
+
+fig_days_scatter.update_xaxes(
+    tickformat=",",
 )
 
 fig_days_scatter.update_yaxes(
@@ -663,14 +676,14 @@ st.plotly_chart(
 st.subheader("이 그래프로 알 수 있는 것")
 
 st.info(
-    "모든 영화의 10위권 체류 기간을 비교할 수 있습니다. "
-    "점이 위쪽에 있을수록 영화가 10위권에 오래 머문 것이며, "
-    "점의 색상은 장르, 점의 크기는 총 관객 수를 나타냅니다."
+    "x축은 영화가 10위권에 머문 일수이고 y축은 첫 주 관객 수입니다. "
+    "따라서 첫 주 관객이 많았던 영화가 10위권에 오래 머물렀는지 "
+    "전체 영화의 분포를 비교할 수 있습니다."
 )
 
 
 # =====================================
-# 흥행 기간 순위표
+# 흥행 기간이 긴 영화 순위표
 # =====================================
 with st.expander("흥행 기간이 긴 영화 순위표 보기"):
     longest_movies = (
