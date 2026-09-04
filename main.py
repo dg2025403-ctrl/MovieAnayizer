@@ -13,7 +13,6 @@ st.set_page_config(
     layout="wide",
 )
 
-
 DATA_URL = (
     "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
 )
@@ -36,7 +35,6 @@ def load_data():
         .str.strip()
     )
 
-    # 빈 장르는 '알 수 없음'으로 처리
     df["genre_first"] = df["genre_first"].replace("", "알 수 없음")
 
     # 숫자형 열 변환
@@ -51,7 +49,7 @@ def load_data():
     for column in numeric_columns:
         df[column] = pd.to_numeric(df[column], errors="coerce")
 
-    # 문자형 열의 결측값 처리
+    # 문자형 열 결측값 처리
     df["movieNm"] = df["movieNm"].fillna("영화명 없음").astype(str)
     df["nation"] = df["nation"].fillna("알 수 없음").astype(str)
     df["nation"] = df["nation"].replace("", "알 수 없음")
@@ -59,9 +57,6 @@ def load_data():
     return df
 
 
-# ---------------------------------
-# 데이터 불러오기
-# ---------------------------------
 try:
     df = load_data()
 except Exception as error:
@@ -168,8 +163,7 @@ fig_treemap = px.treemap(
 fig_treemap.update_traces(
     hovertemplate=(
         "<b>%{customdata[0]}</b><br>"
-        "총 관객: %{customdata[1]:,}명"
-        "<extra></extra>"
+        "총 관객: %{customdata[1]:,}명<extra></extra>"
     )
 )
 
@@ -213,8 +207,6 @@ fig_histogram.update_xaxes(tickformat=",")
 
 st.plotly_chart(fig_histogram, use_container_width=True)
 
-
-# 히스토그램에서 영화가 가장 많이 몰린 구간 계산
 hist_counts, bin_edges = np.histogram(
     hist_data["total_audi"],
     bins=20,
@@ -224,8 +216,6 @@ max_bin_index = hist_counts.argmax()
 most_common_start = bin_edges[max_bin_index]
 most_common_end = bin_edges[max_bin_index + 1]
 
-
-# 가장 관객이 많은 영화 계산
 top_movie_row = hist_data.loc[hist_data["total_audi"].idxmax()]
 top_movie = top_movie_row["movieNm"]
 top_movie_audience = top_movie_row["total_audi"]
@@ -254,7 +244,6 @@ fig_scatter = px.scatter(
     x="first_scrn",
     y="total_audi",
     color="genre_first",
-    hover_name="movieNm",
     title="개봉일 스크린 수와 총 관객",
     labels={
         "first_scrn": "개봉일 스크린 수",
@@ -268,8 +257,7 @@ fig_scatter.update_traces(
     hovertemplate=(
         "<b>%{customdata[0]}</b><br>"
         "개봉일 스크린 수: %{x:,}개<br>"
-        "총 관객: %{y:,}명"
-        "<extra></extra>"
+        "총 관객: %{y:,}명<extra></extra>"
     )
 )
 
@@ -319,8 +307,7 @@ fig_box = px.box(
 fig_box.update_traces(
     hovertemplate=(
         "<b>%{customdata[0]}</b><br>"
-        "총 관객: %{y:,}명"
-        "<extra></extra>"
+        "총 관객: %{y:,}명<extra></extra>"
     )
 )
 
@@ -336,7 +323,7 @@ st.plotly_chart(fig_box, use_container_width=True)
 st.subheader("이 그래프로 알 수 있는 것")
 st.info(
     "영화가 10편 이상인 장르를 대상으로 총 관객의 중앙값과 분포를 비교하고, "
-    "상자 밖의 점을 통해 해당 장르에서 특히 관객이 많거나 적은 영화를 찾을 수 있습니다."
+    "상자 밖의 점을 통해 특히 관객이 많거나 적은 영화를 찾을 수 있습니다."
 )
 
 
@@ -354,7 +341,6 @@ bubble_data = df.dropna(
     ]
 ).copy()
 
-# 버블 크기에 사용할 값이 0 이하인 경우를 방지
 bubble_data["bubble_size"] = bubble_data["first_week_audi"].clip(
     lower=1
 )
@@ -365,14 +351,12 @@ fig_bubble = px.scatter(
     y="total_audi",
     size="bubble_size",
     color="genre_first",
-    hover_name="movieNm",
     size_max=55,
     title="개봉일 스크린 수, 총 관객, 첫 주 관객의 관계",
     labels={
         "first_scrn": "개봉일 스크린 수",
         "total_audi": "총 관객 수",
         "genre_first": "장르",
-        "bubble_size": "첫 주 관객 수",
     },
     custom_data=[
         "movieNm",
@@ -385,8 +369,7 @@ fig_bubble.update_traces(
         "<b>%{customdata[0]}</b><br>"
         "개봉일 스크린 수: %{x:,}개<br>"
         "총 관객: %{y:,}명<br>"
-        "첫 주 관객: %{customdata[1]:,}명"
-        "<extra></extra>"
+        "첫 주 관객: %{customdata[1]:,}명<extra></extra>"
     )
 )
 
@@ -398,8 +381,7 @@ st.plotly_chart(fig_bubble, use_container_width=True)
 st.subheader("이 그래프로 알 수 있는 것")
 st.info(
     "점의 위치는 개봉일 스크린 수와 총 관객의 관계를, "
-    "점의 크기는 첫 주 관객 규모를 나타냅니다. "
-    "따라서 영화의 초반 흥행과 최종 관객을 함께 비교할 수 있습니다."
+    "점의 크기는 첫 주 관객 규모를 나타냅니다."
 )
 
 
@@ -430,8 +412,7 @@ fig_sunburst = px.sunburst(
 fig_sunburst.update_traces(
     hovertemplate=(
         "<b>%{label}</b><br>"
-        "영화 편수: %{value}편"
-        "<extra></extra>"
+        "영화 편수: %{value}편<extra></extra>"
     )
 )
 
@@ -442,8 +423,109 @@ st.plotly_chart(fig_sunburst, use_container_width=True)
 st.subheader("이 그래프로 알 수 있는 것")
 st.info(
     "제작 국가별로 어떤 장르의 영화가 많이 만들어졌는지, "
-    "그리고 각 국가와 장르가 전체 영화 편수에서 차지하는 비중을 확인할 수 있습니다."
+    "각 국가와 장르가 전체 영화 편수에서 차지하는 비중을 확인할 수 있습니다."
 )
+
+
+# =================================================
+# 8. 영화의 흥행 기간 히스토그램
+# =================================================
+st.divider()
+st.header("8. 영화가 10위권에 머문 기간")
+
+days_data = df.dropna(subset=["days_in_top10"]).copy()
+
+# 소수점이 있는 경우를 고려하여 표시용 정수 열 생성
+days_data["흥행 기간"] = days_data["days_in_top10"].round().astype(int)
+
+fig_days_histogram = px.histogram(
+    days_data,
+    x="흥행 기간",
+    nbins=20,
+    title="영화별 10위권 체류 기간 분포",
+    labels={
+        "흥행 기간": "10위권에 머문 날수",
+        "count": "영화 편수",
+    },
+    color_discrete_sequence=["#00CC96"],
+)
+
+fig_days_histogram.update_traces(
+    hovertemplate=(
+        "10위권 체류 기간: %{x}일<br>"
+        "영화 편수: %{y}편<extra></extra>"
+    )
+)
+
+fig_days_histogram.update_layout(
+    height=550,
+    bargap=0.08,
+)
+
+st.plotly_chart(
+    fig_days_histogram,
+    use_container_width=True,
+)
+
+# 가장 영화가 많이 몰린 흥행 기간 구간 계산
+days_counts, days_bins = np.histogram(
+    days_data["days_in_top10"],
+    bins=20,
+)
+
+most_common_days_index = days_counts.argmax()
+most_common_days_start = days_bins[most_common_days_index]
+most_common_days_end = days_bins[most_common_days_index + 1]
+
+# 가장 오래 10위권에 머문 영화 계산
+longest_movie_row = days_data.loc[
+    days_data["days_in_top10"].idxmax()
+]
+
+longest_movie = longest_movie_row["movieNm"]
+longest_days = longest_movie_row["days_in_top10"]
+
+# 평균 및 중앙값 계산
+average_days = days_data["days_in_top10"].mean()
+median_days = days_data["days_in_top10"].median()
+
+st.subheader("이 그래프로 알 수 있는 것")
+st.info(
+    f"대부분의 영화는 10위권에 약 "
+    f"{most_common_days_start:,.0f}일~{most_common_days_end:,.0f일 "
+    f"머문 구간에 몰려 있습니다. "
+    f"영화들의 평균 체류 기간은 {average_days:,.1f}일, "
+    f"중앙값은 {median_days:,.1f}일이며, "
+    f"가장 오래 흥행한 영화는 '{longest_movie}'로 "
+    f"{longest_days:,.0f}일 동안 10위권에 머물렀습니다."
+)
+
+
+# ---------------------------------
+# 8번째 분석 보조 표
+# ---------------------------------
+with st.expander("흥행 기간이 긴 영화 순위 보기"):
+    longest_movies = (
+        days_data[
+            ["movieNm", "genre_first", "days_in_top10", "total_audi"]
+        ]
+        .sort_values("days_in_top10", ascending=False)
+        .head(20)
+        .rename(
+            columns={
+                "movieNm": "영화명",
+                "genre_first": "장르",
+                "days_in_top10": "10위권 체류 일수",
+                "total_audi": "총 관객",
+            }
+        )
+    )
+
+    st.dataframe(
+        longest_movies,
+        use_container_width=True,
+        hide_index=True,
+    )
 
 
 # =================================================
